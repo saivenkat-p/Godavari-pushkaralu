@@ -32,16 +32,28 @@ export async function apiRequest<T = any>(
     headers,
   });
 
+  const rawText = await response.text();
+
   if (!response.ok) {
-    let errorDetail = 'Request failed';
+    let errorDetail = rawText || `Request failed with status ${response.status}`;
     try {
-      const errJson = await response.json();
-      errorDetail = errJson.detail || JSON.stringify(errJson);
+      const errJson = JSON.parse(rawText);
+      if (errJson && errJson.detail) {
+        errorDetail = typeof errJson.detail === 'string' ? errJson.detail : JSON.stringify(errJson.detail);
+      }
     } catch {
-      errorDetail = await response.text();
+      // Keep errorDetail as rawText
     }
     throw new Error(errorDetail);
   }
 
-  return response.json();
+  if (!rawText) {
+    return {} as T;
+  }
+
+  try {
+    return JSON.parse(rawText) as T;
+  } catch {
+    return rawText as unknown as T;
+  }
 }

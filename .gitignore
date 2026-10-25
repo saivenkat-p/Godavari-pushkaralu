@@ -20,6 +20,10 @@ dist-ssr/
 .env
 .env.*
 !.env.example
+auth_info_baileys/
+whatsapp-bridge/auth_info_baileys/
+scratch/
+test_*.py
 
 # IDE
 .vscode/

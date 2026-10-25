@@ -16,6 +16,7 @@ export const WhatsAppSimulator: React.FC = () => {
   const [sessionLang, setSessionLang] = useState('te');
   const [currentState, setCurrentState] = useState('MAIN_MENU');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const isSendingRef = useRef<boolean>(false);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -31,9 +32,11 @@ export const WhatsAppSimulator: React.FC = () => {
   }, []);
 
   const handleSendMessage = async (textToSend?: string) => {
+    if (isSendingRef.current || loading) return;
     const text = (textToSend !== undefined ? textToSend : inputText).trim();
-    if (!text || loading) return;
+    if (!text) return;
 
+    isSendingRef.current = true;
     const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const userMsg: Message = { sender: 'user', text, time: timeStr };
     setMessages((prev) => [...prev, userMsg]);
@@ -73,6 +76,7 @@ export const WhatsAppSimulator: React.FC = () => {
       ]);
     } finally {
       setLoading(false);
+      isSendingRef.current = false;
     }
   };
 
@@ -155,50 +159,58 @@ export const WhatsAppSimulator: React.FC = () => {
           </div>
           <div className="grid grid-cols-1 gap-1.5 text-xs">
             <button
+              disabled={loading}
               onClick={() => handleSendMessage('1')}
-              className="text-left px-3 py-2 bg-slate-50 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 rounded-lg transition"
+              className="text-left px-3 py-2 bg-slate-50 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               1️⃣ <strong>Family Bandham QR Registration</strong> (Guided flow)
             </button>
             <button
+              disabled={loading}
               onClick={() => handleSendMessage('2')}
-              className="text-left px-3 py-2 bg-slate-50 hover:bg-red-50 border border-slate-200 hover:border-red-300 rounded-lg transition text-red-900"
+              className="text-left px-3 py-2 bg-slate-50 hover:bg-red-50 border border-slate-200 hover:border-red-300 rounded-lg transition text-red-900 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               2️⃣ <strong>Report Missing Child</strong> (PA Script + BOLO)
             </button>
             <button
+              disabled={loading}
               onClick={() => handleSendMessage('3')}
-              className="text-left px-3 py-2 bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 rounded-lg transition"
+              className="text-left px-3 py-2 bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               3️⃣ <strong>I Found a Lost Child</strong> (Safety instructions)
             </button>
             <button
+              disabled={loading}
               onClick={() => handleSendMessage('4')}
-              className="text-left px-3 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg transition"
+              className="text-left px-3 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               4️⃣ <strong>Ghats & Facilities</strong> (Locations & Medical)
             </button>
             <button
+              disabled={loading}
               onClick={() => handleSendMessage('5')}
-              className="text-left px-3 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg transition"
+              className="text-left px-3 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               5️⃣ <strong>Cleanliness & Toilet Report</strong> (Dispatch ticket)
             </button>
             <button
+              disabled={loading}
               onClick={() => handleSendMessage('6')}
-              className="text-left px-3 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg transition"
+              className="text-left px-3 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               6️⃣ <strong>Official Approved Rates</strong> (Tariffs)
             </button>
             <button
+              disabled={loading}
               onClick={() => handleSendMessage('7')}
-              className="text-left px-3 py-2 bg-slate-50 hover:bg-amber-50 border border-slate-200 hover:border-amber-300 rounded-lg transition"
+              className="text-left px-3 py-2 bg-slate-50 hover:bg-amber-50 border border-slate-200 hover:border-amber-300 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               7️⃣ <strong>Report Overcharging / Scam</strong>
             </button>
             <button
+              disabled={loading}
               onClick={() => handleSendMessage('8')}
-              className="text-left px-3 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg transition"
+              className="text-left px-3 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               8️⃣ <strong>Emergency Police / 1800 Helpline</strong>
             </button>
@@ -212,20 +224,23 @@ export const WhatsAppSimulator: React.FC = () => {
           </label>
           <div className="grid grid-cols-3 gap-1.5 text-xs">
             <button
+              disabled={loading}
               onClick={() => handleSendMessage('తెలుగు')}
-              className={`py-1 px-2 rounded border font-medium transition ${sessionLang === 'te' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-slate-50 text-slate-700 border-slate-200'}`}
+              className={`py-1 px-2 rounded border font-medium transition disabled:opacity-50 ${sessionLang === 'te' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-slate-50 text-slate-700 border-slate-200'}`}
             >
               తెలుగు
             </button>
             <button
+              disabled={loading}
               onClick={() => handleSendMessage('English')}
-              className={`py-1 px-2 rounded border font-medium transition ${sessionLang === 'en' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-slate-50 text-slate-700 border-slate-200'}`}
+              className={`py-1 px-2 rounded border font-medium transition disabled:opacity-50 ${sessionLang === 'en' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-slate-50 text-slate-700 border-slate-200'}`}
             >
               English
             </button>
             <button
+              disabled={loading}
               onClick={() => handleSendMessage('हिन्दी')}
-              className={`py-1 px-2 rounded border font-medium transition ${sessionLang === 'hi' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-slate-50 text-slate-700 border-slate-200'}`}
+              className={`py-1 px-2 rounded border font-medium transition disabled:opacity-50 ${sessionLang === 'hi' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-slate-50 text-slate-700 border-slate-200'}`}
             >
               हिन्दी
             </button>
@@ -248,7 +263,7 @@ export const WhatsAppSimulator: React.FC = () => {
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-300" />
                 </div>
                 <div className="text-[11px] text-emerald-200">
-                  Official Godavari Pushkaralu • Online
+                  [PILOT PROTOTYPE] Godavari Pushkaralu • Online
                 </div>
               </div>
             </div>

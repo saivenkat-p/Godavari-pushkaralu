@@ -7,7 +7,7 @@ from backend.app.core.config import settings
 from backend.app.core.database import engine, Base, AsyncSessionLocal
 from backend.app.core.seed_data import seed_database
 from backend.app.api import (
-    whatsapp_webhook, simulator, auth, registration, cases, scan, sanitation, verified_services, audit
+    whatsapp_webhook, twilio_webhook, simulator, auth, registration, cases, scan, sanitation, verified_services, audit
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -46,6 +46,7 @@ app.add_middleware(
 
 # Mount Routers
 app.include_router(whatsapp_webhook.router)
+app.include_router(twilio_webhook.router)
 app.include_router(simulator.router)
 app.include_router(auth.router)
 app.include_router(registration.router)

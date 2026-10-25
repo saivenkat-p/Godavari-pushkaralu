@@ -53,7 +53,7 @@ flowchart TD
    - Review and claim pending WhatsApp pre-registrations.
    - Fast stall walk-in registration (~15 seconds target).
    - Generates cryptographically random, non-guessable Band IDs (`BND-XXXXXXXX`).
-   - Generates and delivers secret 4-digit **Release PIN** to verified guardian.
+   - Generates and delivers secret 6-digit **Release PIN** to verified guardian.
    - Printable QR wristband label preview (Thermal printer ready, High error correction, **Zero PII**).
    - Band status tracking: `ISSUED`, `ACTIVE`, `LOST`, `DAMAGED`, `REVOKED`, `REPLACED`.
 
@@ -62,7 +62,7 @@ flowchart TD
    - Child-safety case queue with real-time guardian notification delivery tracking (`INITIATED`, `ACCEPTED_BY_PROVIDER`, `DELIVERED`, `FAILED`).
    - Last-known scan clue with timestamp and GPS accuracy fix (explicitly labeled as last-known, not real-time tracking).
    - Auto-generated **Telugu Public Address (PA) broadcast script** for ghat loudspeaker operators.
-   - **Verified Handover Workflow**: Validates Release PIN (with 3-attempt lockout) or approved Safeguarding Supervisor Fallback (for parents without phones).
+   - **Verified Handover Workflow**: Validates 6-digit Release PIN (with 5-attempt lockout) or approved Safeguarding Supervisor Fallback (for parents without phones).
    - Sanitation Dispatch Grid with team assignment, photo proof validation, and supervisor reopen capability.
    - Verified Rates Directory & Scam reports flying-squad tracking.
    - Immutable audit logging for governance and child protection.
@@ -71,7 +71,7 @@ flowchart TD
    - Instant mobile browser loading (0 MB install).
    - Reassuring safe instructions: *Never hand child to an unverified stranger*.
    - Optional browser GPS capture or manual ghat selection.
-   - Direct helpline links: 1800-425-2027 & Police 112.
+   - Direct helpline links: [SAMPLE] 1800-425-2027 & Police 112.
    - **Absolute Privacy Safeguard**: Zero names, phone numbers, or guardian details are displayed on the public scan page!
 
 ---
@@ -86,9 +86,9 @@ flowchart TD
    ```
 2. Run database migrations / seed and start backend server:
    ```powershell
-   .\.venv\Scripts\python.exe -m uvicorn backend.app.main:app --reload --host 0.0.0.0 --port 8000
+   .\.venv\Scripts\python.exe -m uvicorn backend.app.main:app --reload --host 0.0.0.0 --port 8001
    ```
-   API Documentation available at: `http://localhost:8000/docs`
+   API Documentation available at: `http://localhost:8001/docs`
 
 ### Frontend Setup (Vite + React)
 
@@ -99,14 +99,16 @@ flowchart TD
    ```
    Frontend Application available at: `http://localhost:5173`
 
-### Pre-Seeded Demonstration Accounts
+### Development Seed Accounts
 
-| Role | Username | Password | Purpose |
+Default development passwords can be customized in `.env` via `SEED_ADMIN_PASSWORD`, `SEED_HELPDESK_PASSWORD`, etc.:
+
+| Role | Username | Environment Variable (Default) | Purpose |
 |---|---|---|---|
-| **Admin** | `admin` | `Admin@2027` | Full command access & audit logs |
-| **Registration Operator** | `reg_operator` | `Register@2027` | Assisted stall registration & label printing |
-| **Helpdesk & Police Staff** | `helpdesk_operator` | `Helpdesk@2027` | Child cases, alerts & handover verification |
-| **Sanitation Supervisor** | `sanitation_lead` | `Sanitation@2027` | Facility tickets, photo evidence & sign-off |
+| **Admin** | `admin` | `SEED_ADMIN_PASSWORD` (`Admin@2027`) | Full command access & audit logs |
+| **Registration Operator** | `reg_operator` | `SEED_REG_PASSWORD` (`Staff@2027`) | Assisted stall registration & label printing |
+| **Helpdesk & Police Staff** | `helpdesk_operator` | `SEED_HELPDESK_PASSWORD` (`Staff@2027`) | Child cases, alerts & handover verification |
+| **Sanitation Supervisor** | `sanitation_lead` | `SEED_SANITATION_PASSWORD` (`Staff@2027`) | Facility tickets, photo evidence & sign-off |
 
 ---
 
@@ -119,10 +121,10 @@ Run the automated workflow test suite:
 
 All 12 criteria are tested and verified:
 1. `test_criterion_1_pilgrim_messages_whatsapp`: WhatsApp reply generation in Telugu/English.
-2. `test_criterion_2_and_3_whatsapp_registration_to_dashboard`: WhatsApp guided registration creates pending cluster in dashboard.
-3. `test_criterion_4_and_5_verify_and_issue_bands`: Operator claims pending cluster, generates random Band IDs, issues PIN, and previews QR label.
+2. `test_criterion_2_and_3_whatsapp_registration_to_dashboard`: WhatsApp guided registration creates pending cluster in dashboard with visual clothing recovery data.
+3. `test_criterion_4_and_5_verify_and_issue_bands`: Operator claims pending cluster, generates random Band IDs, issues 6-digit PIN, and previews QR label.
 4. `test_criterion_6_7_8_qr_scan_and_found_child`: Scanning QR displays safe instructions without PII, logs found report, and triggers guardian alert.
-5. `test_criterion_9_case_update_and_verified_handover`: Case handover requires valid Release PIN or supervisor fallback; bad PIN locks out after 3 attempts.
+5. `test_criterion_9_case_update_and_verified_handover`: Case handover requires valid 6-digit Release PIN or supervisor fallback; bad PIN locks out after 5 attempts.
 6. `test_criterion_10_unauthorized_access_restriction`: Sensitive child cases are protected by RBAC; sanitation supervisor or anonymous users receive 401/403.
 7. `test_criterion_11_sanitation_and_verified_services`: Sanitation dispatch tickets, rate cards, and scam reports function end to end.
 8. `test_criterion_12_simulation_vs_real_whatsapp_distinction`: Simulation mode is explicitly distinguished from real Meta Cloud API dispatch.

@@ -4,6 +4,7 @@ import httpx
 from httpx import ASGITransport
 
 from backend.app.main import app
+from backend.app.core.config import settings
 from backend.app.core.database import engine, Base, AsyncSessionLocal
 from backend.app.core.seed_data import seed_database
 from backend.app.services.whatsapp_service import WhatsAppService
@@ -67,8 +68,11 @@ async def test_criterion_2_and_3_whatsapp_registration_to_dashboard():
         r5 = await client.post("/api/simulator/chat", json={"phone_number": phone, "message_text": "3"})
         assert r5.status_code == 200
 
-        # Member details -> Triggers pending cluster creation
-        r6 = await client.post("/api/simulator/chat", json={"phone_number": phone, "message_text": "Kavitha (Wife), Aditya (Child age 6)"})
+        # Member details with visual recovery clothing description -> Triggers pending cluster creation
+        r6 = await client.post("/api/simulator/chat", json={
+            "phone_number": phone,
+            "message_text": "Kavitha (Wife, age 32, blue saree); Aditya (Child, age 6, yellow shirt)"
+        })
         assert r6.status_code == 200
         reply = r6.json()["replies"][0]
         assert "REG-" in reply
@@ -76,7 +80,7 @@ async def test_criterion_2_and_3_whatsapp_registration_to_dashboard():
         # Now login as Registration Operator and check Pending list
         login_res = await client.post("/api/auth/login", json={
             "username": "reg_operator",
-            "password": "Register@2027"
+            "password": settings.SEED_REG_PASSWORD
         })
         assert login_res.status_code == 200
         token = login_res.json()["access_token"]
@@ -102,7 +106,7 @@ async def test_criterion_4_and_5_verify_and_issue_bands():
         # Login
         login_res = await client.post("/api/auth/login", json={
             "username": "reg_operator",
-            "password": "Register@2027"
+            "password": settings.SEED_REG_PASSWORD
         })
         token = login_res.json()["access_token"]
         headers = {"Authorization": f"Bearer {token}"}
@@ -164,7 +168,7 @@ async def test_criterion_6_7_8_qr_scan_and_found_child():
         # 8. Check that case and guardian alert attempt appear in Helpdesk
         login_res = await client.post("/api/auth/login", json={
             "username": "helpdesk_operator",
-            "password": "Helpdesk@2027"
+            "password": settings.SEED_HELPDESK_PASSWORD
         })
         token = login_res.json()["access_token"]
         headers = {"Authorization": f"Bearer {token}"}
@@ -185,15 +189,15 @@ async def test_criterion_9_case_update_and_verified_handover():
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
         login_res = await client.post("/api/auth/login", json={
             "username": "helpdesk_operator",
-            "password": "Helpdesk@2027"
+            "password": settings.SEED_HELPDESK_PASSWORD
         })
         token = login_res.json()["access_token"]
         headers = {"Authorization": f"Bearer {token}"}
 
-        # Seed case is CASE-2027-0101 (cluster PIN is 4829)
+        # Seed case is CASE-2027-0101 (cluster PIN is 482915)
         # Attempt handover with wrong PIN
         bad_pin_res = await client.post("/api/cases/1/verify-handover", headers=headers, json={
-            "pin": "0000",
+            "pin": "000000",
             "witness_staff_name": "Officer K. Lakshmi",
             "guardian_name_verified": "Subba Rao",
             "guardian_phone_verified": "919848022338",
@@ -201,9 +205,9 @@ async def test_criterion_9_case_update_and_verified_handover():
         })
         assert bad_pin_res.status_code == 400
 
-        # Attempt handover with valid PIN (4829)
+        # Attempt handover with valid 6-digit PIN (482915)
         good_pin_res = await client.post("/api/cases/1/verify-handover", headers=headers, json={
-            "pin": "4829",
+            "pin": "482915",
             "witness_staff_name": "Officer K. Lakshmi",
             "guardian_name_verified": "Subba Rao",
             "guardian_phone_verified": "919848022338",
@@ -225,7 +229,7 @@ async def test_criterion_10_unauthorized_access_restriction():
         # Sanitation supervisor attempting to access registration or child cases
         san_login = await client.post("/api/auth/login", json={
             "username": "sanitation_lead",
-            "password": "Sanitation@2027"
+            "password": settings.SEED_SANITATION_PASSWORD
         })
         san_token = san_login.json()["access_token"]
         san_headers = {"Authorization": f"Bearer {san_token}"}
@@ -287,3 +291,156 @@ async def test_criterion_12_simulation_vs_real_whatsapp_distinction():
         # Outbound call in simulation mode returns SIMULATED_SUCCESS
         outbound = await WhatsAppService.send_text_message("919999000111", "Test Notification")
         assert outbound["status"] == "SIMULATED_SUCCESS"
+
+
+@pytest.mark.asyncio
+async def test_registration_input_validations_and_reprompts():
+    """
+    Verifies strict input validation and polite reprompting across all registration steps:
+    - Purely numeric / single-letter guardian name rejected.
+    - Invalid backup phone ('945') rejected; 'SKIP' accepted.
+    - Invalid band count ('000', negative, >6) rejected; 1-6 accepted.
+    - Purely numeric / incomplete member details ('890') rejected; visual description accepted.
+    """
+    transport = ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        phone = "919876543299"
+        await client.post(f"/api/simulator/reset?phone_number={phone}")
+
+        # Start registration & accept consent
+        await client.post("/api/simulator/chat", json={"phone_number": phone, "message_text": "1"})
+        r_consent = await client.post("/api/simulator/chat", json={"phone_number": phone, "message_text": "YES"})
+        assert r_consent.json()["current_state"] == "REG_NAME"
+
+        # 1. Test Guardian Name Validation
+        # Reject numeric "123"
+        r_num = await client.post("/api/simulator/chat", json={"phone_number": phone, "message_text": "123"})
+        assert r_num.json()["current_state"] == "REG_NAME"
+        assert "పేరు సరైనది కాదు" in r_num.json()["replies"][0] or "invalid name" in r_num.json()["replies"][0].lower()
+
+        # Reject single character "A"
+        r_single = await client.post("/api/simulator/chat", json={"phone_number": phone, "message_text": "A"})
+        assert r_single.json()["current_state"] == "REG_NAME"
+
+        # Reject 2-letter vowel-less gibberish "sx"
+        r_sx = await client.post("/api/simulator/chat", json={"phone_number": phone, "message_text": "sx"})
+        assert r_sx.json()["current_state"] == "REG_NAME"
+
+        # Valid name advances to REG_BACKUP_PHONE
+        r_valid_name = await client.post("/api/simulator/chat", json={"phone_number": phone, "message_text": "Srinivasa Rao"})
+        assert r_valid_name.json()["current_state"] == "REG_BACKUP_PHONE"
+
+        # 2. Test Backup Phone Validation
+        # Reject short invalid number "945"
+        r_bad_phone = await client.post("/api/simulator/chat", json={"phone_number": phone, "message_text": "945"})
+        assert r_bad_phone.json()["current_state"] == "REG_BACKUP_PHONE"
+        assert "10 అంకెల" in r_bad_phone.json()["replies"][0] or "10-digit" in r_bad_phone.json()["replies"][0].lower()
+
+        # Accept SKIP / స్కిప్ / valid mobile
+        r_skip = await client.post("/api/simulator/chat", json={"phone_number": phone, "message_text": "SKIP"})
+        assert r_skip.json()["current_state"] == "REG_BANDS_COUNT"
+
+        # 3. Test Wristband Count Validation
+        # Reject "000"
+        r_zero = await client.post("/api/simulator/chat", json={"phone_number": phone, "message_text": "000"})
+        assert r_zero.json()["current_state"] == "REG_BANDS_COUNT"
+        assert "1 నుండి 6" in r_zero.json()["replies"][0] or "1 and 6" in r_zero.json()["replies"][0]
+
+        # Reject out of bounds "7"
+        r_seven = await client.post("/api/simulator/chat", json={"phone_number": phone, "message_text": "7"})
+        assert r_seven.json()["current_state"] == "REG_BANDS_COUNT"
+
+        # Valid count advances to REG_MEMBERS
+        r_valid_count = await client.post("/api/simulator/chat", json={"phone_number": phone, "message_text": "2"})
+        assert r_valid_count.json()["current_state"] == "REG_MEMBERS"
+
+        # 4. Test Member Visual Details Validation
+        # Reject purely numeric "890"
+        r_bad_member = await client.post("/api/simulator/chat", json={"phone_number": phone, "message_text": "890"})
+        assert r_bad_member.json()["current_state"] == "REG_MEMBERS"
+        assert "వివరాలు" in r_bad_member.json()["replies"][0] or "details" in r_bad_member.json()["replies"][0].lower()
+
+        # Photo/Selfie question is recognized with friendly guidance and stays in REG_MEMBERS
+        r_photo = await client.post("/api/simulator/chat", json={
+            "phone_number": phone,
+            "message_text": "teledu pic pettana , selfie dii"
+        })
+        assert r_photo.json()["current_state"] == "REG_MEMBERS"
+        assert "ఫోటో" in r_photo.json()["replies"][0] or "photo" in r_photo.json()["replies"][0].lower()
+
+        # "teledu" or "SKIP" completes registration smoothly without blocking
+        r_teledu = await client.post("/api/simulator/chat", json={
+            "phone_number": phone,
+            "message_text": "teledu"
+        })
+        assert r_teledu.json()["current_state"] == "MAIN_MENU"
+        reply = r_teledu.json()["replies"][0]
+        assert "REG-" in reply
+
+
+@pytest.mark.asyncio
+async def test_missing_child_validation_and_followup():
+    """Verify strict validation on missing child reporting and conversational follow-up."""
+    transport = ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        phone = "+919988776655"
+        # 1. Reset / Start chat
+        r_init = await client.post("/api/simulator/chat", json={"phone_number": phone, "message_text": "RESET"})
+        assert r_init.json()["current_state"] == "MAIN_MENU"
+
+        # 2. Select option 2: Report Missing Child
+        r_opt2 = await client.post("/api/simulator/chat", json={"phone_number": phone, "message_text": "2"})
+        assert r_opt2.json()["current_state"] == "MISSING_CHOICE"
+
+        # 3. Select 2 (No band ID)
+        r_noband = await client.post("/api/simulator/chat", json={"phone_number": phone, "message_text": "2"})
+        assert r_noband.json()["current_state"] == "MISSING_ASK_DETAILS"
+
+        # 4. Single-word input "sai" and label-only "name ; sai" must both be rejected
+        r_sai = await client.post("/api/simulator/chat", json={"phone_number": phone, "message_text": "sai"})
+        assert r_sai.json()["current_state"] == "MISSING_ASK_DETAILS"
+        reply_sai = r_sai.json()["replies"][0]
+        assert "వివరాలు" in reply_sai or "details" in reply_sai.lower() or "विवरण" in reply_sai
+
+        r_name_label = await client.post("/api/simulator/chat", json={"phone_number": phone, "message_text": "name ; sai"})
+        assert r_name_label.json()["current_state"] == "MISSING_ASK_DETAILS"
+
+        # 5. Short string "abc" or pure digits "12345" must be rejected
+        r_short = await client.post("/api/simulator/chat", json={"phone_number": phone, "message_text": "abc"})
+        assert r_short.json()["current_state"] == "MISSING_ASK_DETAILS"
+
+        # 6. Full descriptive details: name + age + clothes + location
+        full_desc = "Sai, age 7, yellow shirt, Kotilingala Pillar 14"
+        r_created = await client.post("/api/simulator/chat", json={"phone_number": phone, "message_text": full_desc})
+        assert r_created.json()["current_state"] == "CASE_ACTIVE_FOLLOWUP"
+        replies = r_created.json()["replies"]
+        assert any("CASE-2027-" in r for r in replies)
+
+        # 7. Follow-up: "dress yellow"
+        r_dress = await client.post("/api/simulator/chat", json={"phone_number": phone, "message_text": "dress yellow"})
+        assert r_dress.json()["current_state"] == "CASE_ACTIVE_FOLLOWUP"
+        reply_dress = r_dress.json()["replies"][0]
+        assert "నమోదయ్యాయి" in reply_dress or "అప్‌డేట్" in reply_dress or "recorded" in reply_dress.lower()
+
+        # 8. Follow-up: "i am saying yellow shirt ,his height 4 ft , i forgot to tell earlier"
+        r_long = await client.post("/api/simulator/chat", json={
+            "phone_number": phone,
+            "message_text": "i am saying yellow shirt ,his height 4 ft , i forgot to tell earlier"
+        })
+        assert r_long.json()["current_state"] == "CASE_ACTIVE_FOLLOWUP"
+        reply_long = r_long.json()["replies"][0]
+        assert "నమోదయ్యాయి" in reply_long or "అప్‌డేట్" in reply_long or "recorded" in reply_long.lower()
+
+        # 9. Return to main menu via "0" or "MENU"
+        r_menu = await client.post("/api/simulator/chat", json={"phone_number": phone, "message_text": "0"})
+        assert r_menu.json()["current_state"] == "MAIN_MENU"
+
+        # 10. While in MAIN_MENU, sending an additional detail catches the open case and updates it
+        r_main_update = await client.post("/api/simulator/chat", json={
+            "phone_number": phone,
+            "message_text": "wearing blue sandals"
+        })
+        assert r_main_update.json()["current_state"] == "CASE_ACTIVE_FOLLOWUP"
+        reply_main = r_main_update.json()["replies"][0]
+        assert "నమోదయ్యాయి" in reply_main or "అప్‌డేట్" in reply_main or "recorded" in reply_main.lower()
+

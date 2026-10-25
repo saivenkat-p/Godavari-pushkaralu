@@ -19,8 +19,21 @@ class Settings(BaseSettings):
     WHATSAPP_APP_SECRET: str = ""
     WHATSAPP_API_VERSION: str = "v19.0"
 
+    # Twilio WhatsApp Business API
+    WHATSAPP_PROVIDER: str = "SIMULATION"
+    TWILIO_ACCOUNT_SID: str = ""
+    TWILIO_AUTH_TOKEN: str = ""
+    TWILIO_WHATSAPP_NUMBER: str = "whatsapp:+17372508034"
+    TWILIO_CONTENT_SID: str = ""
+
     PUBLIC_BASE_URL: str = "http://localhost:5173"
     SIMULATION_MODE: bool = True
+
+    # Initial Seed Passwords (configurable via .env, never hardcoded in production)
+    SEED_ADMIN_PASSWORD: str = "Admin@2027"
+    SEED_HELPDESK_PASSWORD: str = "Staff@2027"
+    SEED_REG_PASSWORD: str = "Staff@2027"
+    SEED_SANITATION_PASSWORD: str = "Staff@2027"
 
     @property
     def cors_origins(self) -> List[str]:

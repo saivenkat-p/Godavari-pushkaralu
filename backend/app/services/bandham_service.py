@@ -24,9 +24,9 @@ def generate_secure_band_id() -> str:
 
 def generate_release_pin() -> str:
     """
-    Generates a 4-digit release PIN for safe handover verification.
+    Generates a 6-digit release PIN for safe handover verification.
     """
-    return f"{secrets.randbelow(9000) + 1000}"
+    return f"{secrets.randbelow(900000) + 100000}"
 
 
 def generate_qr_data_url(band_id: str) -> str:
@@ -70,7 +70,7 @@ class BandhamService:
     ) -> Tuple[FamilyCluster, List[Band], str]:
         """
         Creates a family cluster, generates requested wristbands with cryptographic IDs,
-        and creates an expiring 4-digit Release PIN.
+        and creates an expiring 6-digit Release PIN.
         """
         cluster_code = f"FAM-{secrets.token_hex(3).upper()}"
         plain_pin = generate_release_pin()
@@ -133,7 +133,7 @@ class BandhamService:
     @classmethod
     async def verify_release_pin(cls, db: AsyncSession, cluster: FamilyCluster, pin_attempt: str) -> Tuple[bool, str]:
         """
-        Safely verifies the 4-digit release PIN with brute-force attempt lockout.
+        Safely verifies the 6-digit release PIN with brute-force attempt lockout.
         """
         if not cluster.release_pin_hash:
             return False, "No PIN set on this cluster."
@@ -142,7 +142,7 @@ class BandhamService:
         if cluster.pin_expires_at and cluster.pin_expires_at.replace(tzinfo=datetime.timezone.utc) < now:
             return False, "PIN has expired. Supervisor identity verification required."
 
-        if cluster.pin_failed_attempts >= 3:
+        if cluster.pin_failed_attempts >= 5:
             return False, "Maximum PIN attempts exceeded. Handover locked; must escalate to Police/Supervisor."
 
         if pin_context.verify(pin_attempt, cluster.release_pin_hash):
@@ -152,7 +152,7 @@ class BandhamService:
         else:
             cluster.pin_failed_attempts += 1
             await db.commit()
-            remaining = 3 - cluster.pin_failed_attempts
+            remaining = 5 - cluster.pin_failed_attempts
             return False, f"Invalid PIN. {remaining} attempt(s) remaining."
 
     @classmethod

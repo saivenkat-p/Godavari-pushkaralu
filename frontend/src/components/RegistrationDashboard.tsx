@@ -198,7 +198,7 @@ export const RegistrationDashboard: React.FC = () => {
               </div>
               <div className="text-2xl font-black text-amber-900 tracking-widest">{successInfo.pin}</div>
               <p className="text-[10px] text-slate-500 mt-1">
-                Tell the guardian: <em>"Keep this 4-digit PIN safe. Authorized helpdesk will ask for this PIN if a child needs to be verified for handover."</em>
+                Tell the guardian: <em>"Keep this 6-digit PIN safe. Authorized helpdesk will ask for this PIN if a child needs to be verified for handover."</em>
               </p>
             </div>
 

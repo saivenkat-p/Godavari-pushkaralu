@@ -425,9 +425,9 @@ export const HelpdeskDashboard: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Rate Cards */}
           <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-6 space-y-4">
-            <h2 className="text-base font-bold text-slate-900">Official Authority-Approved Rate Cards</h2>
+            <h2 className="text-base font-bold text-slate-900">[SAMPLE PROTOTYPE] Authority Rate Cards</h2>
             <p className="text-xs text-slate-500">
-              Verified fares published by East Godavari District Collectorate & RTA.
+              Sample prototype fares for Godavari Pushkaralu (Not official tariffs).
             </p>
             <div className="space-y-3">
               {rateCards.map((rc) => (
@@ -555,12 +555,12 @@ export const HelpdeskDashboard: React.FC = () => {
                     type="password"
                     maxLength={6}
                     required={!useFallback}
-                    placeholder="e.g. 4829"
+                    placeholder="e.g. 482915"
                     value={handoverPin}
                     onChange={(e) => setHandoverPin(e.target.value)}
                     className="w-full px-4 py-2 text-lg font-mono tracking-widest text-center border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
                   />
-                  <p className="text-[10px] text-slate-400 mt-1">3 incorrect attempts will automatically lock release.</p>
+                  <p className="text-[10px] text-slate-400 mt-1">5 incorrect attempts will automatically lock release.</p>
                 </div>
               ) : (
                 <div className="space-y-3 bg-amber-50/50 p-3 rounded-xl border border-amber-200">

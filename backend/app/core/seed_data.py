@@ -3,6 +3,7 @@ import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
+from backend.app.core.config import settings
 from backend.app.core.security import get_password_hash
 from backend.app.models.models import (
     User, FamilyCluster, Band, Case, NotificationAttempt, SanitationTicket, RateCard, ScamReport, ScanLog, AuditLog
@@ -20,25 +21,25 @@ async def seed_database(db: AsyncSession):
     users = [
         User(
             username="admin",
-            hashed_password=get_password_hash("Admin@2027"),
+            hashed_password=get_password_hash(settings.SEED_ADMIN_PASSWORD),
             full_name="District Administrator (Pushkaralu Command)",
             role="ADMIN"
         ),
         User(
             username="helpdesk_operator",
-            hashed_password=get_password_hash("Helpdesk@2027"),
+            hashed_password=get_password_hash(settings.SEED_HELPDESK_PASSWORD),
             full_name="K. Lakshmi (Kotilingala Ghat Helpdesk)",
             role="HELPDESK_STAFF"
         ),
         User(
             username="reg_operator",
-            hashed_password=get_password_hash("Register@2027"),
+            hashed_password=get_password_hash(settings.SEED_REG_PASSWORD),
             full_name="P. Ramesh (Stall #1 Registration Lead)",
             role="REGISTRATION_OPERATOR"
         ),
         User(
             username="sanitation_lead",
-            hashed_password=get_password_hash("Sanitation@2027"),
+            hashed_password=get_password_hash(settings.SEED_SANITATION_PASSWORD),
             full_name="M. Srinivas (Zonal Sanitation Inspector)",
             role="SANITATION_SUPERVISOR"
         )
@@ -68,7 +69,7 @@ async def seed_database(db: AsyncSession):
     db.add(pending_cluster)
 
     # 3. Sample Active Family Cluster with Issued Wristbands
-    pin_hash = pin_context.hash("4829")
+    pin_hash = pin_context.hash("482915")
     active_cluster = FamilyCluster(
         cluster_code="FAM-82A1B",
         registration_ref="REG-551092",
@@ -203,52 +204,52 @@ async def seed_database(db: AsyncSession):
     for s in san_tickets:
         db.add(s)
 
-    # 6. Official Verified Rate Cards (Pushkaralu 2027)
+    # 6. Verified Rate Cards (Pushkaralu 2027 Prototype Sample Data)
     rates = [
         RateCard(
             category="BOAT_RIDE",
-            service_name="Official Standard Ghat Ferry",
+            service_name="[SAMPLE] Standard Ghat Ferry",
             approved_rate=50.0,
             unit="per person / round trip",
-            effective_date="Pushkaralu Season 2027",
-            verified_by_authority="East Godavari District Collectorate & Water Transport Authority",
-            notes="Life jacket mandatory. Child below 5 years free."
+            effective_date="Pushkaralu Season 2027 [SAMPLE PROTOTYPE]",
+            verified_by_authority="Water Transport Authority [SAMPLE]",
+            notes="Life jacket mandatory. Child below 5 years free. [SAMPLE DATA]"
         ),
         RateCard(
             category="BOAT_RIDE",
-            service_name="Havelock Bridge Heritage Scenic Tour (30 min)",
+            service_name="[SAMPLE] Havelock Bridge Heritage Scenic Tour (30 min)",
             approved_rate=150.0,
             unit="per person",
-            effective_date="Pushkaralu Season 2027",
-            verified_by_authority="AP Tourism Development Corporation",
-            notes="Licensed tourist catamaran boats with life-guards."
+            effective_date="Pushkaralu Season 2027 [SAMPLE PROTOTYPE]",
+            verified_by_authority="AP Tourism Development Corporation [SAMPLE]",
+            notes="Licensed tourist catamaran boats with life-guards. [SAMPLE DATA]"
         ),
         RateCard(
             category="AUTO_RICKSHAW",
-            service_name="Rajahmundry Railway Station to Pushkar Ghat",
+            service_name="[SAMPLE] Rajahmundry Railway Station to Pushkar Ghat",
             approved_rate=60.0,
             unit="flat fare (up to 3 passengers)",
-            effective_date="Pushkaralu Season 2027",
-            verified_by_authority="Regional Transport Authority (RTA) Rajahmundry",
-            notes="Prepaid auto slip available at Station Exit."
+            effective_date="Pushkaralu Season 2027 [SAMPLE PROTOTYPE]",
+            verified_by_authority="Regional Transport Authority (RTA) [SAMPLE]",
+            notes="Prepaid auto slip available at Station Exit. [SAMPLE DATA]"
         ),
         RateCard(
             category="AUTO_RICKSHAW",
-            service_name="Kotilingala Ghat to Central APSRTC Bus Station",
+            service_name="[SAMPLE] Kotilingala Ghat to Central APSRTC Bus Station",
             approved_rate=80.0,
             unit="flat fare (up to 3 passengers)",
-            effective_date="Pushkaralu Season 2027",
-            verified_by_authority="Regional Transport Authority (RTA) Rajahmundry",
-            notes="Official meter/prepaid tariff."
+            effective_date="Pushkaralu Season 2027 [SAMPLE PROTOTYPE]",
+            verified_by_authority="Regional Transport Authority (RTA) [SAMPLE]",
+            notes="Official meter/prepaid tariff. [SAMPLE DATA]"
         ),
         RateCard(
             category="CLOAKROOM",
-            service_name="Authorized Safe Pilgrim Bag Storage",
+            service_name="[SAMPLE] Pilgrim Bag Storage",
             approved_rate=20.0,
             unit="per bag / 12 hours",
-            effective_date="Pushkaralu Season 2027",
-            verified_by_authority="Municipal Corporation of Rajahmundry",
-            notes="Tokens issued with digital photo receipt."
+            effective_date="Pushkaralu Season 2027 [SAMPLE PROTOTYPE]",
+            verified_by_authority="Municipal Corporation [SAMPLE]",
+            notes="Tokens issued with digital photo receipt. [SAMPLE DATA]"
         )
     ]
     for r in rates:
